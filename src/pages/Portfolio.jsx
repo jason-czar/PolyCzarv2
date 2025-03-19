@@ -110,7 +110,7 @@ const Portfolio = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full py-8">
         <h1 className="text-2xl font-bold mb-6">Portfolio</h1>
         <div className="animate-pulse">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -125,7 +125,7 @@ const Portfolio = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full py-8">
       <h1 className="text-2xl font-bold mb-6">Portfolio</h1>
       
       {/* Summary Cards */}

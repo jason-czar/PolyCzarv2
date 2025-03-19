@@ -1,18 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { marketDataService } from '../services/MarketDataService';
 import MarketDetails from '../components/MarketDetails';
+import PolymarketEmbed from '../components/PolymarketEmbed';
 
 const Markets = () => {
   const [markets, setMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMarket, setSelectedMarket] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [polymarketId, setPolymarketId] = useState('seaair-ceasefire-in-ukraine-before-may');
   const navigate = useNavigate();
+  const { marketId } = useParams();
 
   useEffect(() => {
     fetchMarkets();
   }, []);
+  
+  // Handle direct navigation to a market via URL parameter
+  useEffect(() => {
+    if (marketId && markets.length > 0) {
+      setSelectedMarket(marketId);
+      
+      // Find corresponding Polymarket ID
+      const market = markets.find(m => m.id === marketId);
+      if (market && market.polymarketId) {
+        setPolymarketId(market.polymarketId);
+      }
+    }
+  }, [marketId, markets]);
 
   const fetchMarkets = async () => {
     setLoading(true);
@@ -23,6 +39,9 @@ const Markets = () => {
       // If there are markets and none selected, select the first one
       if (marketsList.length > 0 && !selectedMarket) {
         setSelectedMarket(marketsList[0].id);
+        if (marketsList[0].polymarketId) {
+          setPolymarketId(marketsList[0].polymarketId);
+        }
       }
     } catch (error) {
       console.error('Error fetching markets:', error);
@@ -33,6 +52,15 @@ const Markets = () => {
 
   const handleMarketSelect = (marketId) => {
     setSelectedMarket(marketId);
+    // Find the corresponding Polymarket ID
+    const market = markets.find(m => m.id === marketId);
+    if (market && market.polymarketId) {
+      setPolymarketId(market.polymarketId);
+    } else {
+      // Default Polymarket ID if none specified for this market
+      setPolymarketId('seaair-ceasefire-in-ukraine-before-may');
+    }
+    
     // Update URL without navigating
     window.history.pushState(null, '', `/markets/${marketId}`);
   };
@@ -87,7 +115,7 @@ const Markets = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full py-8">
       <h1 className="text-2xl font-bold mb-6">Markets</h1>
       
       <div className="flex flex-col lg:flex-row gap-6">
@@ -146,13 +174,19 @@ const Markets = () => {
           </div>
         </div>
         
-        {/* Market Details */}
+        {/* Market Details and Polymarket Embed */}
         <div className="lg:w-3/4">
           {selectedMarket ? (
-            <MarketDetails 
-              marketId={selectedMarket} 
-              selectedDate={selectedDate}
-            />
+            <>
+              {/* Polymarket Embed */}
+              <PolymarketEmbed marketId={polymarketId} />
+              
+              {/* PolyCzar Market Details */}
+              <MarketDetails 
+                marketId={selectedMarket} 
+                selectedDate={selectedDate}
+              />
+            </>
           ) : (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
               <p className="text-gray-500 dark:text-gray-400">

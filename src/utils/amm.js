@@ -12,6 +12,8 @@ export class AMM {
     await this.pricingEngine.initialize();
     console.log("AMM initialized");
     this.initializeDemoPositions();
+    this.initializeDemoLiquidityPools(); // Initialize liquidity pools for development
+    console.log("Demo liquidity pools initialized");
   }
 
   getPrice(optionId, optionDetails) {
@@ -213,6 +215,67 @@ export class AMM {
     return { success: true, message: 'Position closed successfully' };
   }
 
+  // Initialize demo liquidity pools for development purposes
+  initializeDemoLiquidityPools() {
+    // Define common market IDs that will be used across the application
+    const marketIds = ['btc-usd', 'eth-usd', 'sol-usd', 'matic-usd', 'link-usd'];
+    
+    // For each market, create various option types with different strikes
+    marketIds.forEach(marketId => {
+      // Create CALL options at different strike prices
+      [0.4, 0.5, 0.6, 0.7, 0.8].forEach(strike => {
+        const callOptionId = `${marketId}-CALL-${strike}`;
+        // Initialize pool with random initial price based on strike
+        const initialPrice = Math.max(0.05, Math.min(0.95, Math.random() * 0.3 + (1 - strike)));
+        this.initializeLiquidityPool(callOptionId, initialPrice);
+        
+        // Add significant liquidity (between 5000 and 15000)
+        const liquidityAmount = 5000 + Math.random() * 10000;
+        this.addLiquidity(callOptionId, liquidityAmount, initialPrice);
+        
+        // Simulate some trading activity
+        const buyVolume = Math.random() * liquidityAmount * 0.3; // 0-30% of liquidity
+        const sellVolume = Math.random() * liquidityAmount * 0.2; // 0-20% of liquidity
+        
+        const pool = this.liquidityPools.get(callOptionId);
+        pool.buyVolume = buyVolume;
+        pool.sellVolume = sellVolume;
+        pool.totalVolume = buyVolume + sellVolume;
+        pool.imbalanceRatio = Math.abs(buyVolume - sellVolume) / pool.totalVolume;
+        pool.lastTradeTimestamp = new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24); // Within last 24h
+        
+        this.liquidityPools.set(callOptionId, pool);
+      });
+      
+      // Create PUT options at different strike prices
+      [0.2, 0.3, 0.4, 0.5, 0.6].forEach(strike => {
+        const putOptionId = `${marketId}-PUT-${strike}`;
+        // Initialize pool with random initial price based on strike
+        const initialPrice = Math.max(0.05, Math.min(0.95, Math.random() * 0.3 + strike));
+        this.initializeLiquidityPool(putOptionId, initialPrice);
+        
+        // Add significant liquidity (between 5000 and 15000)
+        const liquidityAmount = 5000 + Math.random() * 10000;
+        this.addLiquidity(putOptionId, liquidityAmount, initialPrice);
+        
+        // Simulate some trading activity
+        const buyVolume = Math.random() * liquidityAmount * 0.25; // 0-25% of liquidity
+        const sellVolume = Math.random() * liquidityAmount * 0.25; // 0-25% of liquidity
+        
+        const pool = this.liquidityPools.get(putOptionId);
+        pool.buyVolume = buyVolume;
+        pool.sellVolume = sellVolume;
+        pool.totalVolume = buyVolume + sellVolume;
+        pool.imbalanceRatio = Math.abs(buyVolume - sellVolume) / pool.totalVolume;
+        pool.lastTradeTimestamp = new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24); // Within last 24h
+        
+        this.liquidityPools.set(putOptionId, pool);
+      });
+    });
+    
+    console.log(`Initialized ${this.liquidityPools.size} liquidity pools for development`);
+  }
+
   // Initialize demo positions for testing
   initializeDemoPositions() {
     const demoPositions = [
@@ -239,6 +302,97 @@ export class AMM {
     ];
     
     this.userPositions.set('demo-user', demoPositions);
+  }
+
+  // Get all available markets based on liquidity pools
+  getAvailableMarkets() {
+    const markets = new Set();
+    
+    // Extract unique market IDs from all option IDs in liquidity pools
+    for (const optionId of this.liquidityPools.keys()) {
+      const parts = optionId.split('-');
+      if (parts.length >= 3) {
+        const marketId = parts.slice(0, 2).join('-'); // e.g., "btc-usd"
+        markets.add(marketId);
+      }
+    }
+    
+    // Convert set to array and add market details
+    return Array.from(markets).map(marketId => {
+      const [base, quote] = marketId.split('-');
+      
+      // Count how many options are available for this market
+      let callOptions = 0;
+      let putOptions = 0;
+      let totalLiquidity = 0;
+      
+      this.liquidityPools.forEach((pool, optionId) => {
+        if (optionId.startsWith(marketId)) {
+          if (optionId.includes('-CALL-')) {
+            callOptions++;
+          } else if (optionId.includes('-PUT-')) {
+            putOptions++;
+          }
+          totalLiquidity += pool.liquidity;
+        }
+      });
+      
+      // Calculate a relative popularity score based on liquidity
+      const popularity = Math.min(10, Math.max(1, Math.floor(totalLiquidity / 10000)));
+      
+      // Generate some random price movement data for display purposes
+      const currentPrice = marketId === 'btc-usd' ? 0.65 : 
+                           marketId === 'eth-usd' ? 0.45 : 
+                           Math.random() * 0.4 + 0.3; // Between 0.3 and 0.7
+      
+      const dailyChange = (Math.random() * 10 - 5) / 100; // -5% to +5%
+      
+      return {
+        id: marketId,
+        name: `${base.toUpperCase()}/${quote.toUpperCase()}`,
+        base: base.toUpperCase(),
+        quote: quote.toUpperCase(),
+        currentPrice,
+        dailyChange,
+        callOptions,
+        putOptions,
+        popularity,
+        totalLiquidity,
+        volumeLast24h: totalLiquidity * (Math.random() * 0.2 + 0.05) // 5-25% of liquidity
+      };
+    }).sort((a, b) => b.popularity - a.popularity); // Sort by popularity
+  }
+
+  // Get all options available for a specific market
+  getMarketOptions(marketId) {
+    const options = [];
+    
+    this.liquidityPools.forEach((pool, optionId) => {
+      if (optionId.startsWith(marketId)) {
+        const parts = optionId.split('-');
+        if (parts.length >= 3) {
+          const optionType = parts[2]; // "CALL" or "PUT"
+          const strike = parseFloat(parts[3]);
+          
+          options.push({
+            id: optionId,
+            marketId,
+            optionType,
+            strike,
+            bidPrice: pool.lastPrice.bidPrice,
+            askPrice: pool.lastPrice.askPrice,
+            midPrice: pool.lastPrice.midPrice,
+            liquidity: pool.liquidity,
+            volume24h: pool.totalVolume * (Math.random() * 0.5 + 0.2), // Random recent volume
+            impliedProbability: pool.lastPrice.midPrice,
+            expiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days in the future
+          });
+        }
+      }
+    });
+    
+    // Sort by strike price
+    return options.sort((a, b) => a.strike - b.strike);
   }
 }
 

@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useMarketData } from '../hooks/useMarketData';
 import OptionChain from './OptionChain';
 import MarketChart from './MarketChart';
 
 const MarketDetails = ({ marketId, selectedDate }) => {
-  const { market, historicalPrices, loading, error, refreshMarket } = useMarketData(marketId);
-  const [timeRange, setTimeRange] = useState('30d');
+  const { market, historicalPrices, loading, error, refreshMarket, timeRange, setTimeRange } = useMarketData(marketId);
 
   if (loading) {
     return (
@@ -68,11 +67,11 @@ const MarketDetails = ({ marketId, selectedDate }) => {
           <div className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-300 flex flex-wrap gap-3">
             <div>Current probability: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{(market.currentPrice * 100).toFixed(2)}%</span></div>
             <div className="text-gray-300 dark:text-gray-600">•</div>
-            <div>24h Volume: <span className="font-semibold">${market.volume24h.toLocaleString()}</span></div>
+            <div>24h Volume: <span className="font-semibold">${market.volume24h?.toLocaleString() || '0'}</span></div>
             <div className="text-gray-300 dark:text-gray-600">•</div>
-            <div>Liquidity: <span className="font-semibold">${market.liquidity.toLocaleString()}</span></div>
+            <div>Liquidity: <span className="font-semibold">${market.liquidity?.toLocaleString() || '0'}</span></div>
             <div className="text-gray-300 dark:text-gray-600">•</div>
-            <div>Expires: <span className="font-semibold">{formatExpiryDate(market.expiresAt)}</span></div>
+            <div>Expires: <span className="font-semibold">{market.expiresAt ? formatExpiryDate(market.expiresAt) : 'N/A'}</span></div>
           </div>
         </div>
         
@@ -99,7 +98,7 @@ const MarketDetails = ({ marketId, selectedDate }) => {
           
           <MarketChart 
             marketId={marketId} 
-            historicalPrices={historicalPrices} 
+            historicalPrices={historicalPrices || []} 
             timeRange={timeRange}
           />
         </div>
@@ -118,7 +117,7 @@ const MarketDetails = ({ marketId, selectedDate }) => {
         <OptionChain 
           marketId={marketId} 
           selectedDate={selectedDate} 
-          currentPrice={market.currentPrice}
+          currentPrice={market.currentPrice || 0}
         />
       </div>
     </div>

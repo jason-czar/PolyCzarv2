@@ -153,7 +153,7 @@ const DatabaseSetup = () => {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full py-8">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-400 dark:border-red-800 p-4 rounded-lg">
           <p className="text-red-700 dark:text-red-300">
             You must be signed in to access the database setup page.
@@ -164,8 +164,8 @@ const DatabaseSetup = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="bg-white dark:bg-polyDark rounded-lg shadow-card p-6 max-w-4xl mx-auto">
+    <div className="w-full py-8">
+      <div className="bg-white dark:bg-polyDark rounded-lg shadow-card p-6">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Database Setup</h1>
         
         {/* Connection Status */}

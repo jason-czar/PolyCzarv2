@@ -6,6 +6,7 @@ export function useMarketData(marketId) {
   const [historicalPrices, setHistoricalPrices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [timeRange, setTimeRange] = useState('30d');
 
   // Fetch market data
   const fetchMarketData = useCallback(async () => {
@@ -13,7 +14,7 @@ export function useMarketData(marketId) {
     
     setLoading(true);
     try {
-      const marketData = await marketDataService.getMarketData(marketId);
+      const marketData = await marketDataService.getMarketById(marketId);
       setMarket(marketData);
       setError(null);
     } catch (err) {
@@ -25,12 +26,13 @@ export function useMarketData(marketId) {
   }, [marketId]);
 
   // Fetch historical price data
-  const fetchHistoricalPrices = useCallback(async (days = 30) => {
+  const fetchHistoricalPrices = useCallback(async (range = '30d') => {
     if (!marketId) return;
     
     try {
-      const priceData = await marketDataService.getHistoricalPrices(marketId, days);
+      const priceData = await marketDataService.getHistoricalPrices(marketId, range);
       setHistoricalPrices(priceData);
+      setTimeRange(range);
     } catch (err) {
       console.error('Error fetching historical prices:', err);
       setHistoricalPrices([]);
@@ -41,9 +43,9 @@ export function useMarketData(marketId) {
   useEffect(() => {
     if (marketId) {
       fetchMarketData();
-      fetchHistoricalPrices();
+      fetchHistoricalPrices(timeRange);
     }
-  }, [marketId, fetchMarketData, fetchHistoricalPrices]);
+  }, [marketId, fetchMarketData, fetchHistoricalPrices, timeRange]);
 
   // Set up polling for price updates
   useEffect(() => {
@@ -61,7 +63,8 @@ export function useMarketData(marketId) {
     historicalPrices,
     loading,
     error,
-    refreshMarket: fetchMarketData,
-    refreshHistoricalPrices: fetchHistoricalPrices
+    timeRange,
+    setTimeRange: (range) => fetchHistoricalPrices(range),
+    refreshMarket: fetchMarketData
   };
 }

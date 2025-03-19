@@ -1,9 +1,131 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Home = () => {
+  const [marketUrl, setMarketUrl] = useState('');
+  const [searchError, setSearchError] = useState('');
+  const navigate = useNavigate();
+
+  const handleMarketUrlChange = (e) => {
+    setMarketUrl(e.target.value);
+    setSearchError('');
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!marketUrl.trim()) {
+      setSearchError('Please enter a Polymarket URL');
+      return;
+    }
+    
+    // Extract market ID from URL
+    try {
+      let marketId = null;
+      console.log('Attempting to parse URL:', marketUrl);
+      
+      // Try simple string-based parsing first
+      if (marketUrl.includes('polymarket.com/market/')) {
+        const urlParts = marketUrl.split('polymarket.com/market/');
+        if (urlParts.length > 1) {
+          marketId = urlParts[1].split('?')[0].split('/')[0].trim();
+          console.log('Extracted market ID using string split:', marketId);
+        }
+      } 
+      
+      // If that fails, try URL parsing
+      if (!marketId && marketUrl.includes('polymarket.com')) {
+        try {
+          // Add protocol if missing
+          let urlToProcess = marketUrl;
+          if (!urlToProcess.startsWith('http')) {
+            urlToProcess = 'https://' + urlToProcess;
+          }
+          
+          const url = new URL(urlToProcess);
+          console.log('Successfully parsed URL object:', url.toString());
+          
+          const pathParts = url.pathname.split('/');
+          console.log('Path parts:', pathParts);
+          
+          const marketIndex = pathParts.indexOf('market');
+          if (marketIndex !== -1 && pathParts.length > marketIndex + 1) {
+            marketId = pathParts[marketIndex + 1];
+            console.log('Extracted market ID using URL parsing:', marketId);
+          }
+        } catch (urlError) {
+          console.error('Error creating URL object:', urlError.message);
+          // Continue with other parsing methods
+        }
+      }
+      
+      // Last resort - try to extract any slug-like part
+      if (!marketId) {
+        const slugMatch = marketUrl.match(/[a-z0-9-]+$/);
+        if (slugMatch && slugMatch[0]) {
+          marketId = slugMatch[0];
+          console.log('Extracted potential market ID using regex:', marketId);
+        }
+      }
+      
+      if (!marketId) {
+        console.error('No market ID could be extracted from URL:', marketUrl);
+        throw new Error('Could not extract market ID from URL');
+      }
+      
+      console.log('Final extracted market ID:', marketId);
+      
+      // For mock data, map to one of our existing IDs
+      const mockIdMap = {
+        // Common Polymarket IDs mapped to our mock IDs
+        'will-donald-trump-win-the-2024-us-presidential-election': 'trump-2024',
+        'trump-2024-presidential-election': 'trump-2024',
+        'donald-trump-2024': 'trump-2024',
+        'will-btc-be-above-30000-on-june-30-2025': 'btc-price-30k-june',
+        'btc-30k-june-2025': 'btc-price-30k-june',
+        'bitcoin-30k': 'btc-price-30k-june',
+        'will-eth-reach-10000-before-december-2025': 'eth-merge-successful',
+        'ethereum-10k': 'eth-merge-successful',
+        'will-fed-raise-rates-june-2025': 'fed-rate-hike-june',
+        'fed-rates-june': 'fed-rate-hike-june',
+        'will-apple-market-cap-exceed-4t-2025': 'apple-market-cap',
+        'apple-4t': 'apple-market-cap'
+      };
+      
+      // Try to find exact match
+      let finalMarketId = mockIdMap[marketId];
+      
+      // If no exact match, try to find a partial match
+      if (!finalMarketId) {
+        console.log('No exact match found, trying partial matches');
+        for (const [key, value] of Object.entries(mockIdMap)) {
+          if (key.includes(marketId) || marketId.includes(key)) {
+            finalMarketId = value;
+            console.log('Found partial match:', key, '->', value);
+            break;
+          }
+        }
+      }
+      
+      // Default fallback if still no match
+      if (!finalMarketId) {
+        console.log('No matches found, using default fallback');
+        finalMarketId = 'btc-price-30k-june';
+      }
+      
+      console.log('Navigating to market with ID:', finalMarketId);
+      
+      // Navigate to market details
+      navigate(`/markets/${finalMarketId}`);
+      
+    } catch (error) {
+      console.error('Error parsing Polymarket URL:', error.message);
+      setSearchError('Invalid Polymarket URL format. Please enter a valid market URL');
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="w-full py-12">
       <div className="text-center">
         <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
           <span className="block">Welcome to</span>
@@ -13,7 +135,41 @@ const Home = () => {
           Advanced options pricing and trading for prediction markets. 
           Analyze, trade, and manage your portfolio with our powerful tools.
         </p>
-        <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
+        
+        {/* Search Box for Polymarket URLs */}
+        <div className="mt-8 max-w-md mx-auto">
+          <form onSubmit={handleSearchSubmit} className="flex items-center">
+            <div className="relative w-full">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                id="market-url"
+                name="market-url"
+                type="text"
+                className="w-full py-3 pl-10 pr-4 text-gray-300 bg-gray-900 rounded-l-lg focus:outline-none focus:ring-0 border-0"
+                placeholder="Paste Polymarket URL"
+                value={marketUrl}
+                onChange={handleMarketUrlChange}
+              />
+            </div>
+            <button
+              type="submit"
+              className="flex items-center justify-center h-full px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-r-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+          </form>
+          {searchError && (
+            <p className="mt-2 text-sm text-red-500 dark:text-red-400">{searchError}</p>
+          )}
+        </div>
+        
+        <div className="mt-8 max-w-md mx-auto sm:flex sm:justify-center">
           <div className="rounded-md shadow">
             <Link
               to="/markets"

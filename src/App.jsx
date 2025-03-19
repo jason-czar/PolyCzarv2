@@ -25,10 +25,10 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 dark:bg-[#191B1C] text-gray-900 dark:text-white transition-colors duration-300">
-        {/* Navigation Bar */}
-        <nav className="bg-white dark:bg-[#191B1C] shadow-md">
-          <div className="container mx-auto px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#191B1C] text-gray-900 dark:text-white transition-colors duration-300 flex flex-col items-center">
+        {/* Navigation Bar - Full Width */}
+        <nav className="bg-white dark:bg-[#191B1C] shadow-md w-full flex justify-center">
+          <div className="max-w-7xl mx-auto px-6 w-full">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
                 <Link to="/" className="flex-shrink-0 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
@@ -114,30 +114,32 @@ function App() {
           </div>
         </nav>
 
-        {/* Main Content */}
-        <main className="py-4">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/markets" element={<Markets />} />
-            <Route path="/markets/:marketId" element={<Markets />} />
-            <Route path="/portfolio" element={
-              <ProtectedRoute>
-                <Portfolio />
-              </ProtectedRoute>
-            } />
-            <Route path="/db-setup" element={
-              <ProtectedRoute>
-                <DatabaseSetup />
-              </ProtectedRoute>
-            } />
-            <Route path="/sign-in" element={<CustomSignIn />} />
-            <Route path="/sign-up" element={<CustomSignUp />} />
-          </Routes>
+        {/* Main Content - Centered */}
+        <main className="max-w-7xl mx-auto px-6 py-4 w-full flex-grow flex justify-center">
+          <div className="w-full max-w-7xl">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/markets" element={<Markets />} />
+              <Route path="/markets/:marketId" element={<Markets />} />
+              <Route path="/portfolio" element={
+                <ProtectedRoute>
+                  <Portfolio />
+                </ProtectedRoute>
+              } />
+              <Route path="/db-setup" element={
+                <ProtectedRoute>
+                  <DatabaseSetup />
+                </ProtectedRoute>
+              } />
+              <Route path="/sign-in" element={<CustomSignIn />} />
+              <Route path="/sign-up" element={<CustomSignUp />} />
+            </Routes>
+          </div>
         </main>
 
-        {/* Footer */}
-        <footer className="bg-white dark:bg-[#191B1C] shadow-md mt-auto">
-          <div className="container mx-auto px-4 py-6">
+        {/* Footer - Full Width */}
+        <footer className="bg-white dark:bg-[#191B1C] shadow-md mt-auto w-full flex justify-center">
+          <div className="max-w-7xl mx-auto px-6 py-6 w-full">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="mb-4 md:mb-0">
                 <span className="text-sm text-gray-500 dark:text-gray-400">
