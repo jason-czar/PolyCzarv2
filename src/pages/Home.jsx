@@ -149,7 +149,7 @@ const Home = () => {
                 id="market-url"
                 name="market-url"
                 type="text"
-                className="w-full py-3 pl-10 pr-4 text-gray-300 bg-gray-900 rounded-l-lg focus:outline-none focus:ring-0 border-0"
+                className="w-full py-3 pl-10 pr-4 text-gray-300 bg-gray-800 rounded-l-lg focus:outline-none focus:ring-0 border-0"
                 placeholder="Paste Polymarket URL"
                 value={marketUrl}
                 onChange={handleMarketUrlChange}
